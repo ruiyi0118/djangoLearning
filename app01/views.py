@@ -41,3 +41,26 @@ def user_list(request):
     # for obj in queryset:
     #     print(obj.depart.title)  # 根据id自动去关联的表中获取那一行数据depart对象
     return render(request, "user_list.html", {"queryset":queryset})
+
+def user_add(request):
+    """ 添加用户 """
+    if request.method == "GET":
+        context = {
+            'gender_choices': models.UserInfo.gender_choices,
+            'depart_list': models.Department.objects.all()
+        }
+        return render(request, "user_add.html", context)
+    # 获取用户提交的数据
+    user = request.POST.get('user')
+    pwd = request.POST.get('pwd')
+    age = request.POST.get('age')
+    ac = request.POST.get('ac')
+    ctime = request.POST.get('ctime')
+    gd = request.POST.get('gd')
+    dp = request.POST.get('dp')
+
+    # 添加到数据库中
+    models.UserInfo.objects.create(name=user,password=pwd,age=age,account=ac,create_time=ctime,gender=gd,depart_id=dp)
+
+    # 添加成功后返回用户列表页面
+    return redirect("/user/list")
