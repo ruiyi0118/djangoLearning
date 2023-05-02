@@ -18,5 +18,5 @@ class UserInfo(models.Model):
     depart = models.ForeignKey(to='Department', to_field='id', on_delete=models.CASCADE)
 
     # 在django中做的约束
-    gender_choices = ((1, "男"), (2, "女"))
+    gender_choices = ((1, "女"), (2, "男"))
     gender = models.SmallIntegerField(verbose_name='性别', choices=gender_choices)
