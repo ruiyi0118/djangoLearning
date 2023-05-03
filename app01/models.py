@@ -1,5 +1,6 @@
 from django.db import models
 
+
 # Create your models here.
 class Department(models.Model):
     """部门表"""
@@ -8,6 +9,7 @@ class Department(models.Model):
     # 让对象输出的时候是定制的内容
     def __str__(self):
         return self.title
+
 
 class UserInfo(models.Model):
     """员工表"""
@@ -24,3 +26,22 @@ class UserInfo(models.Model):
     # 在django中做的约束
     gender_choices = ((1, "女"), (2, "男"))
     gender = models.SmallIntegerField(verbose_name='性别', choices=gender_choices)
+
+
+class PrettyNum(models.Model):
+    """ 靓号表 """
+    mobile = models.CharField(verbose_name='手机号', max_length=11)
+    # 想允许为空：null=True, blank=True
+    price = models.IntegerField(verbose_name='价格')
+    level_choices = (
+        (1, "1级"),
+        (2, "2级"),
+        (3, "3级"),
+        (4, "4级"),
+    )
+    level = models.SmallIntegerField(verbose_name='级别', choices=level_choices, default=1)
+    status_choices = (
+        (1, '占用'),
+        (2, '未使用')
+    )
+    status = models.SmallIntegerField(verbose_name='状态', choices=status_choices, default=2)
