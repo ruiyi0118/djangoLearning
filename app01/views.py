@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect
 from app01 import models
 
@@ -135,18 +136,23 @@ def user_delete(request, nid):
     models.UserInfo.objects.filter(id=nid).delete()
     return redirect('/user/list/')
 
+
 def pretty_list(request):
     """ 靓号列表 """
     data_list = models.PrettyNum.objects.all().order_by("-level")
     return render(request, 'pretty_list.html', {'data_list': data_list})
 
+
 from django.core.validators import RegexValidator
+
+
 class PrettyModelForm(forms.ModelForm):
-    # 通过正则表达式校验
+    # 验证方法1：通过正则表达式校验
     mobile = forms.CharField(
         label='手机号',
         validators=[RegexValidator(r'^1[3-9]\d{9}$', '手机号格式错误')],
     )
+
     class Meta:
         model = models.PrettyNum
         # fields = ["mobile","price","level","status"]
@@ -158,6 +164,15 @@ class PrettyModelForm(forms.ModelForm):
         # 循环找到所有的插件，添加了class=""样式
         for name, field in self.fields.items():
             field.widget.attrs = {"class": "form-control", "placeholder": field.label}
+
+    # 验证方法2：钩子方法
+    def clean_mobile(self):
+        txt_mobile = self.cleaned_data["mobile"]
+        if models.PrettyNum.objects.filter(mobile=txt_mobile).exists():
+            raise ValidationError("手机号已存在")
+        if len(txt_mobile) != 11:
+            raise ValidationError("格式错误")
+        return txt_mobile
 
 def pretty_add(request):
     """ 添加靓号 """
@@ -172,3 +187,36 @@ def pretty_add(request):
         form.save()  # 将提交的数据存储到数据库中
         return redirect("/pretty/list/")
     return render(request, 'pretty_add.html', {"form": form})
+
+class PrettyExitModelForm(forms.ModelForm):
+    # 手机号不可更改，但显示
+    mobile = forms.CharField(disabled=True, label='手机号')
+    class Meta:
+        model = models.PrettyNum
+        # fields = ["mobile","price","level","status"]
+        # exclude = ['level']  除了level全都带
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 循环找到所有的插件，添加了class=""样式
+        for name, field in self.fields.items():
+            field.widget.attrs = {"class": "form-control", "placeholder": field.label}
+
+def pretty_edit(request, nid):
+    """ 编辑靓号 """
+    if request.method == 'GET':
+        # 根据ID去数据库获取要编辑的那一行的数据
+        row_object = models.PrettyNum.objects.filter(id=nid).first()
+
+        # instance=row_object将每个值在text框中显示出来，预显示
+        form = PrettyExitModelForm(instance=row_object)
+        return render(request, 'pretty_edit.html', {'form': form})
+
+    row_object = models.PrettyNum.objects.filter(id=nid).first()
+    # instance=row_object 更新数据，不加这个是添加
+    form = PrettyExitModelForm(data=request.POST, instance=row_object)
+    if form.is_valid():
+        form.save()
+        return redirect("/pretty/list/")
+    return render(request, 'pretty_edit.html', {'form': form})
