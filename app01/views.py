@@ -43,7 +43,7 @@ def user_list(request):
     return render(request, "user_list.html", {"queryset":queryset})
 
 def user_add(request):
-    """ 添加用户 """
+    """ 添加用户 （原始方法）"""
     if request.method == "GET":
         context = {
             'gender_choices': models.UserInfo.gender_choices,
@@ -64,3 +64,23 @@ def user_add(request):
 
     # 添加成功后返回用户列表页面
     return redirect("/user/list")
+
+from django import forms
+class UserModelForm(forms.ModelForm):
+    class Meta:
+        model = models.UserInfo
+        fields = ["name", "password", "age", "account", "create_time", "gender", "depart"]
+        # widgets = {
+        #     "name": forms.TextInput(attrs={"class": "form-control"})
+        #     "password": forms.PasswordInput(attrs={"class": "form-control"})
+        #     "age": forms.TextInput(attrs={"class": "form-control"})
+        # }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 循环找到所有的插件，添加了class=""样式
+        for name, field in self.fields.items():
+            field.widget.attrs = {"class": "form-control", "placeholder": field.label}
+def user_model_form_add(request):
+    """ 添加用户（基于ModelForm） """
+    form = UserModelForm()
+    return render(request, "user_model_form_add.html", {"form": form})
