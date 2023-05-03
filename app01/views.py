@@ -134,3 +134,8 @@ def user_delete(request, nid):
     """ 删除用户 """
     models.UserInfo.objects.filter(id=nid).delete()
     return redirect('/user/list/')
+
+def pretty_list(request):
+    """ 靓号列表 """
+    data_list = models.PrettyNum.objects.all().order_by("-level")
+    return render(request, 'pretty_list.html', {'data_list': data_list})
