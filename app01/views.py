@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from app01 import models
 
+
 # Create your views here.
 def depart_list(request):
     """ 部门列表 """
@@ -8,6 +9,7 @@ def depart_list(request):
     data_list = models.Department.objects.all()
 
     return render(request, 'depart_list.html', {'data_list': data_list})
+
 
 def depart_add(request):
     """ 添加部门 """
@@ -19,11 +21,13 @@ def depart_add(request):
     models.Department.objects.create(title=title)
     return redirect("/depart/list/")
 
+
 def depart_delete(request):
     """ 删除部门 """
     nid = request.GET.get("nid")
     models.Department.objects.filter(id=nid).delete()
     return redirect("/depart/list/")
+
 
 def depart_edit(request, nid):
     """ 修改编辑部门 """
@@ -35,12 +39,14 @@ def depart_edit(request, nid):
     models.Department.objects.filter(id=nid).update(title=title)
     return redirect("/depart/list/")
 
+
 def user_list(request):
     """ 用户管理 """
     queryset = models.UserInfo.objects.all()
     # for obj in queryset:
     #     print(obj.depart.title)  # 根据id自动去关联的表中获取那一行数据depart对象
-    return render(request, "user_list.html", {"queryset":queryset})
+    return render(request, "user_list.html", {"queryset": queryset})
+
 
 def user_add(request):
     """ 添加用户 （原始方法）"""
@@ -60,14 +66,17 @@ def user_add(request):
     dp = request.POST.get('dp')
 
     # 添加到数据库中
-    models.UserInfo.objects.create(name=user,password=pwd,age=age,account=ac,create_time=ctime,gender=gd,depart_id=dp)
+    models.UserInfo.objects.create(name=user, password=pwd, age=age, account=ac, create_time=ctime, gender=gd,
+                                   depart_id=dp)
 
     # 添加成功后返回用户列表页面
     return redirect("/user/list")
 
-from django import forms
-class UserModelForm(forms.ModelForm):
 
+from django import forms
+
+
+class UserModelForm(forms.ModelForm):
     # 校验
     name = forms.CharField(min_length=2, label='用户名')
 
@@ -79,11 +88,14 @@ class UserModelForm(forms.ModelForm):
         #     "password": forms.PasswordInput(attrs={"class": "form-control"})
         #     "age": forms.TextInput(attrs={"class": "form-control"})
         # }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # 循环找到所有的插件，添加了class=""样式
         for name, field in self.fields.items():
             field.widget.attrs = {"class": "form-control", "placeholder": field.label}
+
+
 def user_model_form_add(request):
     """ 添加用户（基于ModelForm） """
     if request.method == "GET":
@@ -97,3 +109,28 @@ def user_model_form_add(request):
         form.save()  # 将提交的数据存储到数据库中
         return redirect("/user/list/")
     return render(request, 'user_model_form_add.html', {"form": form})
+
+
+def user_edit(request, nid):
+    """ 编辑用户 """
+    if request.method == 'GET':
+        # 根据ID去数据库获取要编辑的那一行的数据
+        row_object = models.UserInfo.objects.filter(id=nid).first()
+
+        # instance=row_object将每个值在text框中显示出来，预显示
+        form = UserModelForm(instance=row_object)
+        return render(request, 'user_edit.html', {'form': form})
+
+    row_object = models.UserInfo.objects.filter(id=nid).first()
+    # instance=row_object 更新数据，不加这个是添加
+    form = UserModelForm(data=request.POST, instance=row_object)
+    if form.is_valid():
+        form.save()
+        return redirect("/user/list/")
+    return render(request, 'user_edit.html', {'form': form})
+
+
+def user_delete(request, nid):
+    """ 删除用户 """
+    models.UserInfo.objects.filter(id=nid).delete()
+    return redirect('/user/list/')
