@@ -67,6 +67,10 @@ def user_add(request):
 
 from django import forms
 class UserModelForm(forms.ModelForm):
+
+    # 校验
+    name = forms.CharField(min_length=2, label='用户名')
+
     class Meta:
         model = models.UserInfo
         fields = ["name", "password", "age", "account", "create_time", "gender", "depart"]
@@ -82,5 +86,14 @@ class UserModelForm(forms.ModelForm):
             field.widget.attrs = {"class": "form-control", "placeholder": field.label}
 def user_model_form_add(request):
     """ 添加用户（基于ModelForm） """
-    form = UserModelForm()
-    return render(request, "user_model_form_add.html", {"form": form})
+    if request.method == "GET":
+        form = UserModelForm()
+        return render(request, "user_model_form_add.html", {"form": form})
+
+    # 用户POST提交数据据，数据校验
+    form = UserModelForm(data=request.POST)
+    if form.is_valid():
+        # 如果数据提交是对的
+        form.save()  # 将提交的数据存储到数据库中
+        return redirect("/user/list/")
+    return render(request, 'user_model_form_add.html', {"form": form})
