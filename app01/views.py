@@ -139,3 +139,36 @@ def pretty_list(request):
     """ 靓号列表 """
     data_list = models.PrettyNum.objects.all().order_by("-level")
     return render(request, 'pretty_list.html', {'data_list': data_list})
+
+from django.core.validators import RegexValidator
+class PrettyModelForm(forms.ModelForm):
+    # 通过正则表达式校验
+    mobile = forms.CharField(
+        label='手机号',
+        validators=[RegexValidator(r'^1[3,9]\d{9}$', '手机号格式错误')],
+    )
+    class Meta:
+        model = models.PrettyNum
+        # fields = ["mobile","price","level","status"]
+        # exclude = ['level']  除了level全都带
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 循环找到所有的插件，添加了class=""样式
+        for name, field in self.fields.items():
+            field.widget.attrs = {"class": "form-control", "placeholder": field.label}
+
+def pretty_add(request):
+    """ 添加靓号 """
+    if request.method == "GET":
+        form = PrettyModelForm()
+        return render(request, "pretty_add.html", {"form": form})
+
+    # 用户POST提交数据据，数据校验
+    form = PrettyModelForm(data=request.POST)
+    if form.is_valid():
+        # 如果数据提交是对的
+        form.save()  # 将提交的数据存储到数据库中
+        return redirect("/pretty/list/")
+    return render(request, 'pretty_add.html', {"form": form})
