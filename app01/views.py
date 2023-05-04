@@ -139,8 +139,13 @@ def user_delete(request, nid):
 
 def pretty_list(request):
     """ 靓号列表 """
-    data_list = models.PrettyNum.objects.all().order_by("-level")
-    return render(request, 'pretty_list.html', {'data_list': data_list})
+    data_dict = {}
+    value = request.GET.get('q', "")
+    if value:
+        data_dict["mobile__contains"] = value
+
+    data_list = models.PrettyNum.objects.filter(**data_dict).order_by("-level")
+    return render(request, 'pretty_list.html', {'data_list': data_list, "search_data": value})
 
 
 from django.core.validators import RegexValidator
