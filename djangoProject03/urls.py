@@ -38,4 +38,5 @@ urlpatterns = [
     path('pretty/list/', views.pretty_list),
     path('pretty/add/', views.pretty_add),
     path('pretty/<int:nid>/edit/', views.pretty_edit),
+    path('pretty/<int:nid>/delete/', views.pretty_delete),
 ]

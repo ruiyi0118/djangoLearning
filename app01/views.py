@@ -220,3 +220,8 @@ def pretty_edit(request, nid):
         form.save()
         return redirect("/pretty/list/")
     return render(request, 'pretty_edit.html', {'form': form})
+
+def pretty_delete(request, nid):
+    """ 删除靓号 """
+    models.PrettyNum.objects.filter(id=nid).delete()
+    return redirect('/pretty/list/')
