@@ -1,5 +1,9 @@
+from math import ceil
+
 from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect
+from django.utils.safestring import mark_safe
+
 from app01 import models
 
 
@@ -139,13 +143,35 @@ def user_delete(request, nid):
 
 def pretty_list(request):
     """ 靓号列表 """
+    # for i in range(300):
+    #     models.PrettyNum.objects.create(mobile="18986169872", price=10, level=1, status=1)
     data_dict = {}
     value = request.GET.get('q', "")
     if value:
         data_dict["mobile__contains"] = value
 
-    data_list = models.PrettyNum.objects.filter(**data_dict).order_by("-level")
-    return render(request, 'pretty_list.html', {'data_list': data_list, "search_data": value})
+    page = int(request.GET.get('page', 1))
+    page_size = 10
+    start = (page - 1) * page_size
+    end = page * page_size
+    data_list = models.PrettyNum.objects.filter(**data_dict).order_by("-level")[start: end]
+
+    total_count = models.PrettyNum.objects.filter(**data_dict).count()
+    total_page_count = ceil(total_count / page_size)
+    start_page = max(page - 5, 1)
+    end_page = min(total_page_count, page + 5)
+    page_str_list = []
+    for i in range(start_page, end_page + 1):
+        if i != page:
+            ele = '<li><a href="?page={}">{}</a></li>'.format(i, i)
+        else:
+            ele = '<li class="active"><a href="?page={}">{}<span class="sr-only">(current)</span></a></li>'.format(i, i)
+
+        page_str_list.append(ele)
+    page_string = mark_safe("".join(page_str_list))
+
+    return render(request, 'pretty_list.html',
+                  {'data_list': data_list, "search_data": value, "page_string": page_string, "page": page})
 
 
 from django.core.validators import RegexValidator
@@ -179,6 +205,7 @@ class PrettyModelForm(forms.ModelForm):
             raise ValidationError("格式错误")
         return txt_mobile
 
+
 def pretty_add(request):
     """ 添加靓号 """
     if request.method == "GET":
@@ -193,9 +220,11 @@ def pretty_add(request):
         return redirect("/pretty/list/")
     return render(request, 'pretty_add.html', {"form": form})
 
+
 class PrettyExitModelForm(forms.ModelForm):
     # 手机号不可更改，但显示
     mobile = forms.CharField(disabled=True, label='手机号')
+
     class Meta:
         model = models.PrettyNum
         # fields = ["mobile","price","level","status"]
@@ -207,6 +236,7 @@ class PrettyExitModelForm(forms.ModelForm):
         # 循环找到所有的插件，添加了class=""样式
         for name, field in self.fields.items():
             field.widget.attrs = {"class": "form-control", "placeholder": field.label}
+
 
 def pretty_edit(request, nid):
     """ 编辑靓号 """
@@ -225,6 +255,7 @@ def pretty_edit(request, nid):
         form.save()
         return redirect("/pretty/list/")
     return render(request, 'pretty_edit.html', {'form': form})
+
 
 def pretty_delete(request, nid):
     """ 删除靓号 """
